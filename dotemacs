@@ -22,8 +22,9 @@
         (width . 140) (height . 50)
         (cursor-color . "white")
         (cursor-type . box)
-        (foreground-color . "yellow")
-        (background-color . "black")))
+;;        (foreground-color . "yellow")
+;;        (background-color . "black")
+	))
 ;;(setq initial-frame-alist '((top . 10) (left . 30)))
 ;;        (font . "-*-Courier-normal-r-*-*-13-*-*-*-c-*-iso8859-1")))
 
