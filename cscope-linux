@@ -1,0 +1,19 @@
+LNX=~/src/linux-lts-raring-3.8.0/
+cd $LNX
+echo > cscope.files
+
+ARCH="arch/x86"
+FS="fs/ceph fs/ext2 fs/ext4 fs/ecryptfs fs/xfs fs/btrfs"
+#DRIVERS="drivers/base drivers/acpi drivers/block drivers/bus drivers/char drivers/clocksource drivers/cpufreq drivers/cpuidle drivers/crypto drivers/dma drivers/gpu drivers/hwmon"
+
+for dir in $ARCH block crypto $DRIVERS $FS include init ipc kernel lib mm security virt; do
+  find  $LNX/$dir -name "*.[chxsS]" -print >> cscope.files
+done
+
+# Only one level
+for dir in fs net; do
+  find $LNX/$dir -maxdepth 1 -name "*.[chxsS]" >> cscope.files
+done
+ 
+cscope -b -q -k
+
