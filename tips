@@ -1,0 +1,248 @@
+flock
+=====
+       (
+         flock -n 9 || exit 1
+         # ... commands executed under lock ...
+       ) 9>/var/lock/mylockfile
+
+dmesg loglevel
+==============
+$ echo "6" > /proc/sys/kernel/printk
+
+ps tips
+=======
+ps -ef: show fullpath
+
+affinity
+========
+taskset -c 1,2 qemu ...
+ps -mo pid,tid,fname,psr,user `pgrep qemu`
+-----
+    /sys/fs/cgroup/cpuset/<group>/
+      tasks
+      echo 0-15 > cpuset.cpus
+      echo pid > tasks
+      for example, echo $$ > tasks ($$ means the process ID that the script file is running under.)
+
+msr
+===
+grep msr syslog.msr  | awk -e '{print $8 $9 " " $10 " " $12}' | sort | uniq
+
+crash and dbgsym
+================
+$ sudo dpkg -l | grep dbgsym
+ii  linux-image-3.5.0-27-generic-dbgsym       3.5.0-27.46                                amd64        Linux kernel debug image for version 3.5.0 on 64 bit x86 SMP
+$ sudo dpkg -L linux-image-3.5.0-27-generic-dbgsym | grep vmlinux
+/usr/lib/debug/boot/vmlinux-3.5.0-27-generic
+$ crash /usr/lib/debug/boot/vmlinux-3.5.0-27-generic 
+
+libc-dev:i386 package
+=====================
+
+mac osx live kernel debug
+=========================
+$ sudo nvram boot-args=”kmem=1”
+$ sudo gdb /Volumes/KernelDebugKit/mach_kernel
+(gdb) target darwin-kernel
+(gdb) source /Volumes/KernelDebugKit/kgmacros
+Loading Kernel GDB Macros package. Type "help kgm" for more info.
+(gdb) attach
+Connected
+
+intel doc
+=========
+p827: int n
+p1837: 64-bit IDT
+p1879: 64-bit TSS
+
+page replacement
+================
+PAGE_REPLACE
+
+empty_zero_page
+===============
+
+Mac OSX syscalls
+================
+otool -arch i386 -tV /usr/lib/system/libsystem_c.dylib | grep sysenter
+
+gdb
+===
+gdb ./t
+b open
+s
+x/10i $pc
+si
+
+debug linux kernel
+==================
+codename=$(lsb_release -c | awk  '{print $2}')
+sudo tee /etc/apt/sources.list.d/ddebs.list << EOF
+deb http://ddebs.ubuntu.com/ ${codename}      main restricted universe multiverse
+deb http://ddebs.ubuntu.com/ ${codename}-security main restricted universe multiverse
+deb http://ddebs.ubuntu.com/ ${codename}-updates  main restricted universe multiverse
+deb http://ddebs.ubuntu.com/ ${codename}-proposed main restricted universe multiverse
+EOF
+
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ECDCAD72428D7C01
+sudo apt-get update
+sudo apt-get install linux-image-$(uname -r)-dbgsym
+
+gdb /usr/lib/debug/boot/vmlinux-3.5.0-17-generic /proc/kcore
+
+mount qcow2
+===========
+sudo rmmod nbd
+sudo modprobe nbd max_part=63
+sudo qemu-nbd -c /dev/nbd0 ~/data/ubuntu2.qcow2 
+mkdir ~/data/ubuntu2.mount; 
+sudo mount /dev/nbd0p2 ~/data/ubuntu2.mount
+#sudo umount ~/data/ubuntu2.mount/
+
+mount raw image
+===============
+mount image.img /mnt/image -o loop,offset=32256
+alternative:
+losetup /dev/loop0 image.img
+kpartx -a /dev/loop0
+mount /dev/mapper/loop0p1 /mnt/image
+
+i915 driver code walk
+=====================
+#define I810_PGETBL_CTL		0x2020
+#define I810_PGETBL_ENABLED	0x00000001
+
+
+qemu/efi debug
+==============
+run.gpu.q35.ubuntu 2>&1 | tee run.gpu.q35.ubuntu.log
+
+bin/qemu-system-x86_64 \
+ -enable-kvm -m 2048 \
+ -L share/qemu \
+ -cpu core2duo \
+ -monitor stdio \
+ -serial telnet::9999,server \
+ -serial file:ubuntu.q35.log \
+ -netdev user,id=hub0port0 -device e1000,netdev=hub0port0,id=eth0,addr=4 \
+ -device ahci,id=ahci,addr=3 \
+ -device ide-drive,bus=ahci.0,drive=MacHDD \
+ -drive id=MacHDD,if=none,file=/home/wei.xu/data/ubuntu2.qcow2 \
+ -bios OVMF.fd \
+ -M q35 \
+ -device intel-vga,id=i915,addr=2 \
+ -device isa-applesmc \
+# -vga intel \
+# -usb -device usb-kbd -device usb-mouse \
+
+linux command line, add follwoing to /etc/default/grub
+  -console tty0 -console ttyS0 -console ttyS1
+and do update_grub2
+
+Debug Kernel using nc and qemu serial
+=====================================
+nc -l -p 9999 | tee boot.log
+-monitor stdio -serial tcp:127.0.0.1:9999
+
+Guests
+======
+ubuntu guest user: wei
+osx guest user: wxu
+
+check busratio and fsb freqency
+===============================
+sudo ~/bin/i7z_64bit
+
+acpi & fwts
+===========
+sudo fwts -r acpidump.log acpidump
+sudo fwts -r uefidump.log uefidump
+fwts -s
+
+gpu notes
+=========
+ command line
+   add i915.modeset=0 single
+   remove ro flash quiet $..
+ build 
+   export TARGETDIR=~gpu/i915-wei
+   mkdir -p $TARGETDIR && cd $TARGETDIR
+   cp /boot/config-`uname -r`  .config
+   cp /usr/src/linux-headers-3.5.0-17-generic/Module.symvers .
+   cd /usr/src/linux-source-3.5.0
+   make EXTRAVERSION=-17-generic O=$TARGETDIR oldconfig
+   make EXTRAVERSION=-17-generic O=$TARGETDIR prepare
+   make EXTRAVERSION=-17-generic O=$TARGETDIR outputmakefile
+   make EXTRAVERSION=-17-generic O=$TARGETDIR archprepare
+   make EXTRAVERSION=-17-generic O=$TARGETDIR modules SUBDIRS=scripts
+   make EXTRAVERSION=-17-generic O=$TARGETDIR modules SUBDIRS=drivers/gpu/drm/i915
+
+cgen
+====
+maxdata
+
+usb hotplug
+===========
+
+Prepare Image
+-------------
+In linux host,
+$ qemu-img create malware.img 8G
+$ mkfs.ntfs -f -F malware.img 
+$ mkdir malware; mount -o loop malware.img malware
+$ Add files to malware/
+$ umount malware
+
+Hot Plug USB Key
+----------------
+In qemu monitor:
+(qemu) drive_add  0 id=USB_DRIVE,if=none,file=/home/wei.xu/data/malware.img
+(qemu) device_add usb-storage,drive=USB_DRIVE,id=USB_DISK
+(qemu) device_del USB_DISK
+
+Above two steps need to be integrated into AVC.
+
+vfat and readonly
+=================
+readonly=on
+
+Mount qcow2
+===========
+modprobe nbd max_part=63
+qemu-nbd -c /dev/nbd0 image.img
+mount /dev/nbd0p1 /mnt/image
+
+qemu-img, fdisk, mkfs
+=====================
+qemu-img create -f raw test.img 1GB
+
+## Make and format partition
+losetup /dev/loop0 test.img
+fdisk /dev/loop0
+losetup -d /dev/loop0
+
+# partition should start at sector 63. Check with fdisk -ul test.img
+# losetup -o 32256 /dev/loop0 test.img
+# mkfs.ext3 -b 4096 -I 128 -o test /dev/loop0 261048
+
+## mount image
+mount -o loop /dev/loop0 /mnt/test
+
+Mac OS X
+========
+-f: skip cache
+-v: verbose
+-s: single mode
+-v recovery=yes
+
+ssh
+===
+eval $(ssh-agent)
+ssh-add
+
+Build kmod on ubuntu
+====================
+#make V=1 KERNELDIR=/lib/modules/`uname -r`/build/
+#make V=1 KERNELSOURCEDIR=/usr/src/linux-source-3.5.0/linux-source-3.5.0 KERNELDIR=/lib/modules/`uname -r`/build/
+make V=1 KERNELSOURCEDIR=/lib/modules/`uname -r`/build/
+
