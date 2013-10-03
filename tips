@@ -1,3 +1,56 @@
+ubuntu "open"
+============
+xdg-open abc.pdf
+
+filesystem
+==========
+cat /proc/filesystems
+cat /proc/mounts
+mount
+
+reStructuredText
+================
+
+tools: pandoc, retext, emacs
+
+Section Header
+==============
+
+Subsection Header
+-----------------
+
+- A bullet list item
+- Second item
+  - A sub item
+- Third item
+
+1) An enumerated list item
+2) Second item
+   a) Sub item that goes on at length and thus needs
+      to be wrapped. Note the indentation that must
+      match the beginning of the text, not the 
+      enumerator.
+      i) Sub-sub item
+3) Third item
+
+#) Another enumerated list item
+#) Second item  
+
+.. image:: /path/to/image.jpg
+
+.. _Wikipedia: http://www.wikipedia.org/
+
+__ http://www.python.org/
+
+Linux pagecache
+===============
+To free pagecache:
+  echo 1 > /proc/sys/vm/drop_caches
+To free dentries and inodes:
+  echo 2 > /proc/sys/vm/drop_caches
+To free pagecache, dentries and inodes:
+  echo 3 > /proc/sys/vm/drop_caches
+
 flock
 =====
        (
@@ -237,6 +290,7 @@ Mac OS X
 
 ssh
 ===
+pkill ssh-agent
 eval $(ssh-agent)
 ssh-add
 

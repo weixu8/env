@@ -1,0 +1,2 @@
+alias tips="less ~/env/tips"
+alias ssh-ubuntu="ssh -X -p 5588 wei@localhost"
