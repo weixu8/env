@@ -1,14 +1,16 @@
 ;;cscope
-(add-to-list 'load-path "~/env/")
 (require 'xcscope)
 
 ;;menu bar
-(add-hook 'asm-mode-hook 'imenu-add-menubar-index)
 (add-hook 'c-mode-hook 'imenu-add-menubar-index)
-(add-hook 'c++-mode-hook 'imenu-add-menubar-index)
 (add-hook 'python-mode-hook 'imenu-add-menubar-index)
 (add-hook 'php-mode-hook 'imenu-add-menubar-index)
 (add-hook 'java-mode-hook 'imenu-add-menubar-index)
+
+(global-set-key (kbd "C-x <up>") 'windmove-up)
+(global-set-key (kbd "C-x <down>") 'windmove-down)
+(global-set-key (kbd "C-x <right>") 'windmove-righte)
+(global-set-key (kbd "C-x <left>") 'windmove-left)
 
 ;;ediff ignore spaces
 (defcustom ediff+-ignore-whitespace-option "-w"
@@ -17,15 +19,15 @@
   :group 'ediff+)
 
 ;;size & position
-(setq default-frame-alist
-      '((top . 10) (left . 30)
-        (width . 140) (height . 50)
-        (cursor-color . "white")
-        (cursor-type . box)
-;;        (foreground-color . "yellow")
-;;        (background-color . "black")
-	))
-;;(setq initial-frame-alist '((top . 10) (left . 30)))
+;(setq default-frame-alist
+;      '((top . 200) (left . 400)
+;        (width . 120) (height . 45)
+;        (cursor-color . "white")
+;        (cursor-type . box)
+;        (foreground-color . "yellow")
+;        (background-color . "black")))
+
+(setq initial-frame-alist '((top . 10) (left . 30)))
 ;;        (font . "-*-Courier-normal-r-*-*-13-*-*-*-c-*-iso8859-1")))
 
 ;; default tab-width
@@ -44,17 +46,57 @@
 
 
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; custom-set-variables was added by Custom -- don't edit or cut/paste it!
   ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
- '(cua-mode t nil (cua-base))
- '(ediff-diff-options "-w")
- '(show-paren-mode t)
+ '(auto-compression-mode t nil (jka-compr))
+ '(case-fold-search t)
+ '(current-language-environment "UTF-8")
+ '(default-input-method "rfc1345")
+ '(global-font-lock-mode t nil (font-lock))
+ '(show-paren-mode t nil (paren))
+ '(text-mode-hook (quote (turn-on-auto-fill text-mode-hook-identify)))
+ '(transient-mark-mode t)
  '(uniquify-buffer-name-style (quote forward) nil (uniquify)))
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; custom-set-faces was added by Custom -- don't edit or cut/paste it!
   ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
  )
+
+(defun leuven-vc-dir-hide-up-to-date-and-unregistered ()
+    (interactive)
+    (vc-dir-hide-up-to-date)
+    (vc-dir-hide-unregistered))
+
+  (defun vc-dir-hide-unregistered ()
+    "Hide unregistered items from display."
+    (interactive)
+    (let ((crt (ewoc-nth vc-ewoc -1))
+          (first (ewoc-nth vc-ewoc 0)))
+      ;; go over from the last item to the first and remove the
+      ;; unregistered files and directories with no child files
+      (while (not (eq crt first))
+        (let* ((data (ewoc-data crt))
+               (dir (vc-dir-fileinfo->directory data))
+               (next (ewoc-next vc-ewoc crt))
+               (prev (ewoc-prev vc-ewoc crt))
+               ;; ewoc-delete does not work without this...
+               (inhibit-read-only t))
+          (when (or
+                 ;; remove directories with no child files
+                 (and dir
+                      (or
+                       ;; nothing follows this directory
+                       (not next)
+                       ;; next item is a directory
+                       (vc-dir-fileinfo->directory (ewoc-data next))))
+                 ;; remove files in the unregistered state
+                 (eq (vc-dir-fileinfo->state data) 'unregistered))
+            (ewoc-delete vc-ewoc crt))
+          (setq crt prev)))))
+
+  (defun vc-ediff-ignore-whitespace (historic &optional not-urgent)
+    "Ignore regions that differ in white space & line breaks only."
+    (interactive (list current-prefix-arg t))
+    (require 'ediff)
+    (let ((ediff-ignore-similar-regions t))
+      (call-interactively 'vc-ediff)))  ; XXX does not work yet
