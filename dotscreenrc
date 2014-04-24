@@ -1,0 +1,7 @@
+escape ^Oo
+defscrollback 100000
+
+termcapinfo xterm-256color|xterm-color|xterm|xterms|xs|rxvt ti@:te@
+
+bind b eval "writebuf" "exec sh -c 'pbcopy < /tmp/screen-exchange'"
+
