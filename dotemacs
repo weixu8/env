@@ -1,4 +1,5 @@
 ;;cscope
+(add-to-list 'load-path "~/env/")
 (require 'xcscope)
 
 ;;menu bar
